@@ -9,6 +9,12 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
 class MainActivity : AppCompatActivity() {
+    var afterOperator: Boolean = false
+    var previousZero: Boolean = true
+    var hasDot: Boolean = false
+    var startIndex = 0
+    var toDisplayExpression: String = "0";
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -20,44 +26,94 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Result from TextView
-        var resultView = findViewById<TextView>(R.id.result_tv)
+        val resultView = findViewById<TextView>(R.id.result_tv)
         
         // Clear Button
-        var buttonClear = findViewById<Button>(R.id.clear_btn)
+        findViewById<Button>(R.id.clear_btn).setOnClickListener { onClear() }
         // Equal Button
-        var buttonEqual = findViewById<Button>(R.id.equal_btn)
+        findViewById<Button>(R.id.equal_btn).setOnClickListener { onEqual() }
+
         // Divide Button
-        var buttonDivide = findViewById<Button>(R.id.divide_btn)
+        findViewById<Button>(R.id.divide_btn).setOnClickListener { onOperator("/") }
+
         // Multiply Button
-        var buttonMultiple = findViewById<Button>(R.id.multiply_btn)
+        findViewById<Button>(R.id.multiply_btn).setOnClickListener { onOperator("*") }
+
         // Subtract Button
-        var buttonSubtract = findViewById<Button>(R.id.subtract_btn)
+        findViewById<Button>(R.id.subtract_btn).setOnClickListener { onOperator("-") }
+
         // Add Button
-        var buttonAdd = findViewById<Button>(R.id.add_btn)
+        findViewById<Button>(R.id.add_btn).setOnClickListener { onOperator("+") }
         // Dot Button
-        var buttonDot = findViewById<Button>(R.id.dot_btn)
+        findViewById<Button>(R.id.dot_btn).setOnClickListener { onDot() }
 
         // Number 0 Button
-        var button0 = findViewById<Button>(R.id.zero_btn)
-        // Number 1 Button
-        var button1 = findViewById<Button>(R.id.one_btn)
-        // Number 2 Button
-        var button2 = findViewById<Button>(R.id.two_btn)
-        // Number 3 Button
-        var button3 = findViewById<Button>(R.id.three_btn)
-        // Number 4 Button
-        var button4 = findViewById<Button>(R.id.four_btn)
-        // Number 5 Button
-        var button5 = findViewById<Button>(R.id.five_btn)
-        // Number 6 Button
-        var button6 = findViewById<Button>(R.id.six_btn)
-        // Number 7 Button
-        var button7 = findViewById<Button>(R.id.seven_btn)
-        // Number 8 Button
-        var button8 = findViewById<Button>(R.id.eight_btn)
-        // Number 9 Button
-        var button9 = findViewById<Button>(R.id.nine_btn)
+        findViewById<Button>(R.id.zero_btn).setOnClickListener { onDigit(resultView, "0") }
 
+        // Number 1 Button
+        findViewById<Button>(R.id.one_btn).setOnClickListener { onDigit(resultView, "1") }
+
+        // Number 2 Button
+        findViewById<Button>(R.id.two_btn).setOnClickListener { onDigit(resultView, "2") }
+
+        // Number 3 Button
+        findViewById<Button>(R.id.three_btn).setOnClickListener { onDigit(resultView, "3") }
+
+        // Number 4 Button
+        findViewById<Button>(R.id.four_btn).setOnClickListener { onDigit(resultView, "4") }
+
+        // Number 5 Button
+        findViewById<Button>(R.id.five_btn).setOnClickListener { onDigit(resultView, "5") }
+
+        // Number 6 Button
+        findViewById<Button>(R.id.six_btn).setOnClickListener { onDigit(resultView, "6") }
+
+        // Number 7 Button
+        findViewById<Button>(R.id.seven_btn).setOnClickListener { onDigit(resultView, "7") }
+
+        // Number 8 Button
+        findViewById<Button>(R.id.eight_btn).setOnClickListener { onDigit(resultView, "8") }
+
+        // Number 9 Button
+        findViewById<Button>(R.id.nine_btn).setOnClickListener { onDigit(resultView, "9") }
 
     }
+
+    private fun onClear() {
+
+    }
+
+    private fun onEqual() {
+        print('.')
+    }
+
+    private fun onDot() {
+        print('=')
+    }
+
+    private fun onDigit(resultTv: TextView, digit: String) {
+        // for each index input, add to textView
+        // If inputted digit = 0 => consider the firstZero var => true =
+        if (digit != "0") {
+            toDisplayExpression +=  "0"
+        } else {
+            var currentExpression = toDisplayExpression.toCharArray()
+            if (currentExpression.size == 1) {
+                if (currentExpression[0] == '0') {
+                    toDisplayExpression = digit;
+                } else {
+
+                }
+            }
+            toDisplayExpression +=  digit
+        }
+
+        resultTv.text = toDisplayExpression
+        print(digit)
+    }
+
+    private fun onOperator(operator: String) {
+        print(operator)
+    }
+
 }
