@@ -11,6 +11,8 @@ import androidx.core.view.WindowInsetsCompat
 import java.math.BigDecimal
 import java.math.RoundingMode
 
+import java.util.Stack
+
 
 class MainActivity : AppCompatActivity() {
     private var afterOperator: Boolean = false
@@ -99,72 +101,82 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        val operators = mutableListOf<String>()
-        val numbers = mutableListOf<BigDecimal>()
+        val opStk = Stack<String>()
+        val valStk = Stack<BigDecimal>()
+
         var currentNumber = ""
 
+        // Helper function to process the operations
+        fun doOp() {
+            val x = valStk.pop()
+            val y = valStk.pop()
+            val op = opStk.pop()
+
+            val result = when (op) {
+                "+" -> y.add(x)
+                "-" -> y.subtract(x)
+                "*" -> y.multiply(x)
+                "/" -> {
+                    if (x.compareTo(BigDecimal.ZERO) == 0) {
+                        resultTv.text = getString(R.string.error_msg)
+                        return
+                    }
+                    y.divide(x, 9, RoundingMode.HALF_UP)
+                }
+                else -> BigDecimal.ZERO
+            }
+            valStk.push(result)
+        }
+
+        // Helper function to repeat operations based on precedence
+        fun repeatOps(refOp: String) {
+            while (opStk.isNotEmpty() && precedence(opStk.peek()) >= precedence(refOp)) {
+                doOp()
+            }
+        }
+
+        // Process the inputList
         for (item in inputList) {
             if (item in listOf("+", "-", "*", "/")) {
-                numbers.add(BigDecimal(currentNumber))
-                operators.add(item as String)
+                // Add number to valStk before operator
+                valStk.push(BigDecimal(currentNumber))
                 currentNumber = ""
+
+                // Process based on precedence
+                repeatOps(item as String)
+                opStk.push(item)
             } else {
                 currentNumber += item.toString()
             }
         }
-        numbers.add(BigDecimal(currentNumber))
+        // Push the last number
+        valStk.push(BigDecimal(currentNumber))
 
-        // Process * and / first (left to right)
-        var i = 0
-        while (i < operators.size) {
-            if (operators[i] == "*" || operators[i] == "/") {
-                val left = numbers[i]
-                val right = numbers[i + 1]
-                val result = if (operators[i] == "*") {
-                    left.multiply(right)
-                } else {
-                    if (right.compareTo(BigDecimal.ZERO) == 0) {
-                        resultTv.text = getString(R.string.error_msg)
-                        return
-                    } else {
-                        left.divide(right, 10, RoundingMode.HALF_UP) // You can adjust precision as needed
-                    }
-                }
-                numbers[i] = result
-                numbers.removeAt(i + 1)
-                operators.removeAt(i)
-            } else {
-                i++
-            }
-        }
+        // Perform remaining operations
+        repeatOps("$") // "$" signifies the end of input with lowest precedence
 
-        // Process + and - (left to right)
-        i = 0
-        while (i < operators.size) {
-            val left = numbers[i]
-            val right = numbers[i + 1]
-            val result = if (operators[i] == "+") {
-                left.add(right)
-            } else {
-                left.subtract(right)
-            }
-            numbers[i] = result
-            numbers.removeAt(i + 1)
-            operators.removeAt(i)
-        }
-
-        // Format the result to remove redundant zeros using BigDecimal.stripTrailingZeros()
-        val finalResult = numbers[0].stripTrailingZeros()
+        // Format the result
+        val finalResult = valStk.pop().setScale(8, RoundingMode.HALF_UP).stripTrailingZeros()
         val formattedResult = if (finalResult.scale() <= 0) {
-            finalResult.toBigInteger().toString()  // Convert to integer if it's a whole number
+            finalResult.toBigInteger().toString()
         } else {
-            finalResult.toPlainString()  // Keep decimal without scientific notation
+            finalResult.toPlainString()
         }
 
         resultTv.text = formattedResult
         inputList.clear()
         inputList.add(formattedResult)
     }
+
+    // Function to define operator precedence
+    private fun precedence(op: String): Int {
+        return when (op) {
+            "+", "-" -> 1
+            "*", "/" -> 2
+            else -> 0 // End of input or any invalid operator
+        }
+    }
+
 
 
     private fun onDot(resultTv: TextView) {
