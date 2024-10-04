@@ -19,7 +19,7 @@ class MainActivity : AppCompatActivity() {
     private var firstDigitZero: Boolean = true
     private var hasDot: Boolean = false
 //    private var startIndex = 0
-//    private var divideZero: Boolean = false
+    private var divideZero: Boolean = false
     private val inputList: MutableList<Any> = mutableListOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,9 +93,11 @@ class MainActivity : AppCompatActivity() {
         afterOperator = false
         firstDigitZero = true
         hasDot = false
+        divideZero = false
     }
 
     private fun onEqual(resultTv: TextView) {
+        if (divideZero) return
         if (inputList.isEmpty() || inputList.last() in listOf("+", "-", "*", "/")) {
             resultTv.text = getString(R.string.error_msg)
             return
@@ -107,7 +109,7 @@ class MainActivity : AppCompatActivity() {
         var currentNumber = ""
 
         // Helper function to process the operations
-        fun doOp() {
+        fun doOp(): Boolean {  // Return true if no error, false if error
             val x = valStk.pop()
             val y = valStk.pop()
             val op = opStk.pop()
@@ -118,21 +120,28 @@ class MainActivity : AppCompatActivity() {
                 "*" -> y.multiply(x)
                 "/" -> {
                     if (x.compareTo(BigDecimal.ZERO) == 0) {
+                        // Division by zero error handling
                         resultTv.text = getString(R.string.error_msg)
-                        return
+                        divideZero = true
+                        inputList.clear()  // Clear the input list to prevent further operations
+                        opStk.clear()      // Clear operator stack
+                        valStk.clear()     // Clear value stack
+                        return false       // Stop further processing
                     }
-                    y.divide(x, 9, RoundingMode.HALF_UP)
+                    y.divide(x, 9, RoundingMode.HALF_UP)  // You can adjust the precision as needed
                 }
                 else -> BigDecimal.ZERO
             }
             valStk.push(result)
+            return true
         }
 
         // Helper function to repeat operations based on precedence
-        fun repeatOps(refOp: String) {
+        fun repeatOps(refOp: String): Boolean {
             while (opStk.isNotEmpty() && precedence(opStk.peek()) >= precedence(refOp)) {
-                doOp()
+                if (!doOp()) return false  // Stop if an error occurs
             }
+            return true
         }
 
         // Process the inputList
@@ -143,7 +152,7 @@ class MainActivity : AppCompatActivity() {
                 currentNumber = ""
 
                 // Process based on precedence
-                repeatOps(item as String)
+                if (!repeatOps(item as String)) return  // Stop if error occurs
                 opStk.push(item)
             } else {
                 currentNumber += item.toString()
@@ -153,7 +162,7 @@ class MainActivity : AppCompatActivity() {
         valStk.push(BigDecimal(currentNumber))
 
         // Perform remaining operations
-        repeatOps("$") // "$" signifies the end of input with lowest precedence
+        if (!repeatOps("$")) return  // Stop if error occurs
 
         // Format the result
         val finalResult = valStk.pop().setScale(8, RoundingMode.HALF_UP).stripTrailingZeros()
@@ -178,8 +187,8 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-
     private fun onDot(resultTv: TextView) {
+        if (divideZero) return
         val lastElement = inputList.lastOrNull()
 
         if (lastElement == null || lastElement in listOf("+", "-", "*", "/")) {
@@ -195,6 +204,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onDigit(resultTv: TextView, digit: String) {
+
+        if (divideZero) return
+
         if (inputList.isEmpty()) {
             inputList.add(digit)
         } else {
@@ -211,6 +223,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onOperator(resultTv: TextView, operator: String) {
+        if (divideZero) return
         if (inputList.isNotEmpty() && inputList.last() in listOf("+", "-", "*", "/")) {
             inputList[inputList.size - 1] = operator
         } else {
